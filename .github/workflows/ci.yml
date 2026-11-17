@@ -6,6 +6,8 @@ on:
   push:
     branches: [main, master]
   pull_request:
+  # The backend and frontend live in other repositories and do not trigger this workflow: run it by hand after changing them.
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
