@@ -121,9 +121,17 @@ GET    /api/v1/notifications/stream                # SSE: connected / notificati
 
 ## CI
 
-`.github/workflows/ci.yml` (GitHub Actions, on push to main/master and PRs) runs three jobs:
-- `backend`: `cd backend && ./mvnw -B verify` (Testcontainers needs Docker).
-- `frontend`: `cd frontend/social-app && npm ci && npm run build`.
-- `e2e`: `docker compose up -d --wait postgres neo4j kafka`, run the backend jar (needs `APP_JWT_SECRET`, >= 32 bytes), then `npm run e2e` in `frontend/social-app`.
-The Playwright e2e needs infra + backend running locally too (see "Running the stack"); the dev server on :4200 is started by `playwright.config.ts`.
+Every repository has its own workflow (GitHub Actions, on push to `main`, on PRs and manually):
+- `socialapp-api` (`backend/`): job `verify` = `./mvnw -B verify` on Temurin 25 (Testcontainers needs Docker).
+- `socialapp-web` (`frontend/social-app/`): job `build` = `npm ci`, `tsc -p e2e/tsconfig.json`, `npm run build`.
+- this repo (`.github/workflows/ci.yml`): integration of the whole project. Jobs `backend` and `frontend` repeat the two above against
+  the default branches; `e2e` runs `docker compose up -d --wait postgres neo4j kafka`, the backend jar (needs `APP_JWT_SECRET`, >= 32 bytes)
+  and `npm run e2e` in `frontend/social-app` (the dev server on :4200 is started by `playwright.config.ts`). It runs on pushes and PRs of THIS
+  repo and by hand (`workflow_dispatch`); pushes to the backend or frontend repo do not trigger it, so run it after changing them.
+Dependabot (weekly) is configured in all three: Maven / npm, GitHub Actions, and the image tags in `docker-compose.yml` here. Angular and
+TypeScript majors are ignored on purpose (`ng update` one major at a time).
+
+**`main` is protected in all three repositories** (admins included): no direct pushes, no force-push, no deletion; change it through a PR
+(`git switch -c <branch>`, push, `gh pr create`, wait for the required checks, `gh pr merge --merge`). Required checks: `verify` (api), `build`
+(web), `backend` + `frontend` + `e2e` (this repo). Branches are deleted after merge. There is no CD: the project is a showcase that runs locally.
 The project is three git repositories side by side: this root (`marduk112/SocialApp`: `docker-compose.yml`, `.github/`, docs), `backend/` (`marduk112/socialapp-api`) and `frontend/social-app/` (`marduk112/socialapp-web`); the root `.gitignore` excludes the other two. The workflow lives in the root repo and checks the other two out next to it (default branch), and it only runs on pushes/PRs of the ROOT repo: changes in the backend/frontend repos are not built by it.
