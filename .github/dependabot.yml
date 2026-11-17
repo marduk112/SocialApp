@@ -1,0 +1,12 @@
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+  # Image tags in docker-compose.yml (PostgreSQL, Neo4j LTS, Kafka, Kafka UI). Review each bump: a major PostgreSQL / Neo4j / Kafka
+  # change needs a migration, not just a new tag.
+  - package-ecosystem: docker-compose
+    directory: "/"
+    schedule:
+      interval: weekly
