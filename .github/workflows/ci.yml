@@ -25,7 +25,7 @@ jobs:
         with:
           repository: marduk112/socialapp-api
           path: backend
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '25'
@@ -77,7 +77,7 @@ jobs:
         with:
           repository: marduk112/socialapp-web
           path: frontend/social-app
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '25'
