@@ -65,7 +65,7 @@ services:
 
   # ── Apache Kafka (KRaft mode — no Zookeeper) ─────────────────────────────────
   kafka:
-    image: confluentinc/cp-kafka:8.3.3
+    image: confluentinc/cp-kafka:8.4.1
     container_name: socialapp-kafka
     restart: unless-stopped
     environment:
