@@ -1,5 +1,21 @@
 # SocialApp — Polyglot Persistence Social Media Service
 
+[![CI](https://github.com/marduk112/SocialApp/actions/workflows/ci.yml/badge.svg)](https://github.com/marduk112/SocialApp/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
+A full-stack social network built to explore **hexagonal architecture, DDD and event-driven design** with polyglot persistence:
+users and posts in PostgreSQL, the follow graph in Neo4j, and Kafka between bounded contexts.
+
+## Highlights
+
+- **Bounded contexts that never import each other** (UserManagement, SocialGraph, Feed, Notification): cross-context communication is Kafka only.
+- **Transactional outbox** for every domain event (Postgres), plus a Neo4j-side outbox imported into it: no lost or phantom events, order kept per key.
+- **Live updates over SSE**: a real-time feed and per-user notifications.
+- **Discovery**: friends-of-friends "who to follow" (Cypher), full-text post search (`tsvector`), people search (`pg_trgm`), trending hashtags.
+- **Posts**: hashtags and `@mentions`, reposts and quotes, images (validated and stripped of metadata), bookmarks, keyset pagination.
+- **Current stack**: Java 25, Spring Boot 4.1, Angular 22 (zoneless, signals), PostgreSQL 18, Neo4j 5.26 LTS, Kafka 8.3.
+- **Tested end to end**: ~570 backend tests (Testcontainers against real Postgres, Neo4j and Kafka) and 85 Playwright e2e tests.
+
 ## Stack
 | Layer | Technology |
 |---|---|
@@ -19,15 +35,13 @@ The project is split into three repositories that live side by side in one folde
 | Repository | Contents | Path |
 |---|---|---|
 | [`SocialApp`](https://github.com/marduk112/SocialApp) (this one) | `docker-compose.yml`, CI, documentation | `./` |
-| [`SocialApp-backend`](https://github.com/marduk112/SocialApp-backend) | Spring Boot backend | `./backend` |
-| [`social-app-frontend`](https://github.com/marduk112/social-app-frontend) | Angular frontend | `./frontend/social-app` |
-
-All three are private. CI (in this repository) needs one repository secret, `REPOS_TOKEN`: a fine-grained personal access token with read-only *Contents* access to the other two repositories.
+| [`socialapp-api`](https://github.com/marduk112/socialapp-api) | Spring Boot backend | `./backend` |
+| [`socialapp-web`](https://github.com/marduk112/socialapp-web) | Angular frontend | `./frontend/social-app` |
 
 ```bash
 git clone https://github.com/marduk112/SocialApp.git && cd SocialApp
-git clone https://github.com/marduk112/SocialApp-backend.git backend
-git clone https://github.com/marduk112/social-app-frontend.git frontend/social-app
+git clone https://github.com/marduk112/socialapp-api.git backend
+git clone https://github.com/marduk112/socialapp-web.git frontend/social-app
 ```
 
 ---

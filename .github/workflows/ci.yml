@@ -1,7 +1,5 @@
-# Three repositories make up the project: this one (docker-compose.yml, CI, docs), marduk112/SocialApp-backend and
-# marduk112/social-app-frontend (all private). Jobs check out the other two next to this one, at their default branch, with the
-# repository secret REPOS_TOKEN (fine-grained personal access token, Contents: read-only on those two repositories), because the
-# default GITHUB_TOKEN can only read the repository the workflow runs in.
+# Three repositories make up the project: this one (docker-compose.yml, CI, docs), marduk112/socialapp-api (backend) and
+# marduk112/socialapp-web (frontend). Jobs check out the other two (public) next to this one, at their default branch.
 name: CI
 
 on:
@@ -23,9 +21,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: marduk112/SocialApp-backend
+          repository: marduk112/socialapp-api
           path: backend
-          token: ${{ secrets.REPOS_TOKEN }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -52,9 +49,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          repository: marduk112/social-app-frontend
+          repository: marduk112/socialapp-web
           path: frontend/social-app
-          token: ${{ secrets.REPOS_TOKEN }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -73,14 +69,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
-          repository: marduk112/SocialApp-backend
+          repository: marduk112/socialapp-api
           path: backend
-          token: ${{ secrets.REPOS_TOKEN }}
       - uses: actions/checkout@v4
         with:
-          repository: marduk112/social-app-frontend
+          repository: marduk112/socialapp-web
           path: frontend/social-app
-          token: ${{ secrets.REPOS_TOKEN }}
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
