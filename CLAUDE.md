@@ -31,8 +31,8 @@ Infrastructure ports:
 
 | BC | Persistence | Kafka role |
 |---|---|---|
-| **UserManagement** | PostgreSQL (JPA/Flyway) | Producer: `user-events` |
-| **SocialGraph** | Neo4j | Consumer: `user-events` |
+| **UserManagement** | PostgreSQL (JPA/Flyway) | Producer: `user-events`; Consumer: `social-events` (blocks -> people search, 5A) |
+| **SocialGraph** | Neo4j | Consumer: `user-events`; Producer (via Neo4j outbox): `social-events` (follows, blocks, mutes) |
 | **Feed** | PostgreSQL (JPA/Flyway) | Producer: `post-events`, `reaction-events`, `comment-events`; Consumer: `post-events` → SSE, `user-events`, `social-events` |
 | **Notification** | PostgreSQL (JPA/Flyway) | Consumer: `user-events` (actor profiles), `social-events`, `post-events`, `reaction-events`, `comment-events` → notifications + per-user SSE |
 
@@ -46,6 +46,8 @@ SocialGraph (Neo4j) records its events in a Neo4j-side outbox that is imported i
 Events (sealed interface `DomainEvent`):
 - `UserCreatedEvent` / `UserUpdatedEvent` → topic `user-events`
 - `UserFollowedEvent` / `UserUnfollowedEvent` → topic `social-events` (Feed keeps a local `follows` projection)
+- `UserBlockedEvent` / `UserUnblockedEvent` / `UserMutedEvent` / `UserUnmutedEvent` → topic `social-events` (5A; Feed,
+  Notification and UserManagement keep local block/mute projections)
 - `PostCreatedEvent` → topic `post-events` → SSE broadcast
 - `ReactionEvent` → topic `reaction-events` (post AND comment reactions since 3A: `target`, `targetOwnerId`, `targetSnippet`)
 - `CommentCreatedEvent` → topic `comment-events` (key postId; post author + parent comment author for replies)
@@ -64,6 +66,20 @@ DELETE /api/v1/social/follow
 GET    /api/v1/social/{userId}/following
 GET    /api/v1/social/{userId}/followers
 GET    /api/v1/social/suggestions?limit=5   # who to follow (4A): [{userId, username, avatarUrl, mutualFollowers}], limit clamped 1..20
+                                             #   never users the caller blocks/mutes or who block the caller (5A)
+PUT    /api/v1/social/block/{userId}        # 5A: 204 idempotent | 400 self/malformed id | 404 unknown user; removes follows both
+                                             #   ways, follow across a block (either way) -> 403 "You cannot follow this user"
+DELETE /api/v1/social/block/{userId}        # 204 always (follows are not restored)
+GET    /api/v1/social/blocks                # caller's blocked users -> [{userId, username, avatarUrl}]
+PUT    /api/v1/social/mute/{userId}         # 5A: 204 idempotent | 400 self/malformed id | 404 unknown user (one-directional, silent)
+DELETE /api/v1/social/mute/{userId}         # 204 always
+GET    /api/v1/social/mutes                 # caller's muted users -> [{userId, username, avatarUrl}]
+GET    /api/v1/social/relationship/{userId} # -> {userId, following, followedBy, blocked, muted} (blocked/muted BY the caller; no
+                                             #   "blocked by" flag), always 200
+                                             # Block hides each side's posts/reposts/comments/notifications from the other in every
+                                             # list + people search; their posts/comments -> 404 to open or interact with. Mute
+                                             # hides only from the muter's lists/trends/suggestions/notifications. Details and lag:
+                                             # backend/CLAUDE.md "Blocks and mutes".
 
 GET    /api/v1/feed?scope=all|following&cursor=&size=   # keyset-paginated -> {items, nextCursor}
 GET    /api/v1/feed/stream?scope=all|following          # SSE (text/event-stream); token via ?access_token=
